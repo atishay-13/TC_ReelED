@@ -3,10 +3,11 @@ import { prisma } from '@/lib/db'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { username: string } }
+  { params }: { params: Promise<{ username: string }> }
 ) {
   try {
-    console.log('Fetching profile for username:', params.username)
+    const { username } = await params
+    console.log('Fetching profile for username:', username)
     
     // Get all users and filter (workaround for Prisma type issues)
     const allUsers = await prisma.user.findMany({
@@ -25,12 +26,12 @@ export async function GET(
 
     console.log('All users:', allUsers.map((u: any) => u.username))
 
-    const user = allUsers.find((u: any) => u.username === params.username)
+    const user = allUsers.find((u: any) => u.username === username)
 
     console.log('User found:', user)
 
     if (!user) {
-      console.log('No user found for username:', params.username)
+      console.log('No user found for username:', username)
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
