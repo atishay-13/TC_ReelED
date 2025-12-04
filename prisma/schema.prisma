@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  username      String    @unique
+  name          String
+  password      String?
+  authProvider  String    @default("local")
+  isCreator     Boolean   @default(false)
+  bio           String?
+  avatar        String?
+  followers     Int       @default(0)
+  following     Int       @default(0)
+  createdAt     DateTime  @default(now())
+  
+  createdCourses Course[]
+  progress       Progress[]
+  assessmentSubmissions AssessmentSubmission[]
+  likes         Like[]
+  comments      Comment[]
+  savedReels    SavedReel[]
+  follows       Follow[]  @relation("UserFollows")
+  followedBy    Follow[]  @relation("UserFollowedBy")
+  stories       Story[]
+}
+
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  
+  follower    User     @relation("UserFollows", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("UserFollowedBy", fields: [followingId], references: [id], onDelete: Cascade)
+  
+  @@unique([followerId, followingId])
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  userId    String
+  reelId    String
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reel      Reel     @relation(fields: [reelId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, reelId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  userId    String
+  reelId    String
+  text      String
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reel      Reel     @relation(fields: [reelId], references: [id], onDelete: Cascade)
+}
+
+model SavedReel {
+  id        String   @id @default(uuid())
+  userId    String
+  reelId    String
+  createdAt DateTime @default(now())
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reel      Reel     @relation(fields: [reelId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, reelId])
+}
+
+model Course {
+  id              String    @id @default(uuid())
+  creatorId       String
+  title           String
+  description     String
+  price           Float     @default(0)
+  visibility      String    @default("public")
+  tags            String
+  passThreshold   Float     @default(70)
+  createdAt       DateTime  @default(now())
+  
+  creator         User      @relation(fields: [creatorId], references: [id])
+  reels           Reel[]
+  progress        Progress[]
+  assessments     Assessment[]
+}
+
+model Reel {
+  id              String    @id @default(uuid())
+  courseId        String
+  index           Int
+  title           String
+  mediaUrl        String
+  microAction     String?
+  duration        Int       @default(60)
+  views           Int       @default(0)
+  likesCount      Int       @default(0)
+  createdAt       DateTime  @default(now())
+  
+  course          Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  likes           Like[]
+  comments        Comment[]
+  savedBy         SavedReel[]
+  
+  @@unique([courseId, index])
+}
+
+model Progress {
+  id                  String    @id @default(uuid())
+  userId              String
+  courseId            String
+  currentReelIndex    Int       @default(0)
+  reelCompletion      String    @default("[]")
+  assessmentScores    String    @default("[]")
+  completedAt         DateTime?
+  lastAccessedAt      DateTime  @default(now())
+  
+  user                User      @relation(fields: [userId], references: [id])
+  course              Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, courseId])
+}
+
+model Assessment {
+  id              String    @id @default(uuid())
+  courseId        String
+  type            String
+  config          String
+  
+  course          Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  submissions     AssessmentSubmission[]
+}
+
+model AssessmentSubmission {
+  id              String    @id @default(uuid())
+  assessmentId    String
+  userId          String
+  answer          String
+  score           Float
+  feedback        String?
+  submittedAt     DateTime  @default(now())
+  
+  assessment      Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  user            User       @relation(fields: [userId], references: [id])
+}
+
+model Story {
+  id          String   @id @default(uuid())
+  userId      String
+  mediaUrl    String
+  mediaType   String   @default("image")
+  text        String?
+  link        String?
+  views       Int      @default(0)
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
