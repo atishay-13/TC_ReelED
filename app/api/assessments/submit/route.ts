@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
+export const dynamic = 'force-dynamic'
+
 // Mock AI feedback generator
 function generateAIFeedback(type: string, answer: string, correct: boolean): string {
   if (correct) {
@@ -64,6 +66,7 @@ export async function POST(request: NextRequest) {
       passed: score >= 70,
       feedback
     })
+    
   } catch (error) {
     console.error('Assessment submission error:', error)
     return NextResponse.json({ error: 'Failed to submit assessment' }, { status: 500 })
