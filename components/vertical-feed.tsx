@@ -201,7 +201,9 @@ export function VerticalFeed({ reels, onLike, onSave, onComment, onShare, onComp
           >
             {reel.mediaUrl.startsWith('/uploads') || reel.mediaUrl.startsWith('http') ? (
               <video
-                ref={(el) => (videoRefs.current[index] = el)}
+                ref={(el) => {
+                  videoRefs.current[index] = el
+                }}
                 src={reel.mediaUrl}
                 className="w-full h-full object-cover"
                 loop
